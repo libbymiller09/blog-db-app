@@ -1,0 +1,25 @@
+{
+  "name": "blog-db-app",
+  "version": "1.0.0",
+  "description": "blog-app",
+  "main": "server.js",
+  "dependencies": {
+    "mongo": "^0.1.0",
+    "mongoose": "^5.3.9"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/libbymiller09/blog-db-app.git"
+  },
+  "author": "Elisabeth Miller",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/libbymiller09/blog-db-app/issues"
+  },
+  "homepage": "https://github.com/libbymiller09/blog-db-app#readme"
+}
