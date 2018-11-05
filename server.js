@@ -17,8 +17,13 @@ app.use(express.json());
 app.get('/authors', (req, res) => {
   author.find()
   .then(authors => {
-    res.json(authors.map(author = author.serialize()));
-  })
+    res.json(authors.map(author => {
+      return {
+        id: author._id,
+        name: `${author.firstName} ${author.lastName}`,
+        userName: author.userName
+      };
+    }))
   .catch(err => {
     console.error(err);
     res.status(500).json({error: 'error' });
@@ -44,7 +49,13 @@ app.get('/posts', (req, res) => {
 app.get('/posts/:id', (req, res) => {
   blogPost.findById()
   .then(posts => {
-    res.json(posts.map(post => post.serialize()));
+    res.json({
+      id: post._id,
+      author: post.authorName,
+      content: post.content,
+      title: post.title,
+      comments: post.comments
+    });
   })
   .catch(err => {
     console.error(err);
@@ -64,14 +75,28 @@ app.post('/authors', (req, res) => {
       return res.status(400).send(message);
     }
   }
-  author.create({
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    userName: req.bodyusertName,
-  })
-  .then(authors => {
-    res.json(authors.map(author => author.serialize()));
-  })
+  author.findOne({ userName: req.body.userName })
+  .then(author => {
+    if (author) {
+      const message = `Requested username (${req.body.userName}) is already taken by another author`;
+      console.error(message);
+      return res.status(400).send(message);
+    } else {
+      author.create({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      userName: req.bodyusertName,
+    })
+    .then(author => res.status(201).json({
+      _id: author.id,
+      name: `${author.firstName} ${author.lastName}`,
+      userName: author.userName
+    }))
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: 'uh oh' });
+    });
+  }
 })
 
 //request body should now contain json object
@@ -86,15 +111,26 @@ app.post('/posts', (req, res) => {
       return res.status(400).send(message);
     }
   }
-  blogPost.create({
-    title: req.body.title,
-    content: req.body.content,
-    author: req.body.author
-  })
-  .then(posts => {
-    res.json(posts.map(post => post.serialize()));
-  })
-});
+  author.findById(req.body.author_id)
+  .then(author => {
+    blogPost.create({
+      title: req.body.title,
+      content: req.body.content,
+      author: req.body.author
+    })
+    .then(blogPost => res.status(201).json({
+      id: blogPost.id,
+      author: `${author.firstName} ${author.lastName}`,
+      content: blogPost.content,
+      title: blogPost.title,
+      comments: blogPost.comments
+    }))
+    .catch(err => {
+      console.error(err);
+      res.status(500).json({ error: 'uh-oh' });
+    });
+  });
+})
 
 
 //PUT /posts/:id
@@ -112,12 +148,6 @@ app.put('/authors/:id', (req, res) => {
     lastName: req.body.lastName,
     userName: req.bodyusertName,
   })
-  //needs to check if the names are already in use
-  // if (req.body.userName === ) {
-  //   const errorMessage = `Requested username (${req.body.userName}) is already taken by another author`;
-  //   console.error(errorMessage);
-  //   return res.status(400).send(errorMessage);
-  // }
   .then(posts => {
     res.json(posts.map(post => post.serialize()));
   })
@@ -130,19 +160,19 @@ app.put('/posts/:id', (req, res) => {
     console.error(message);
     return res.status(400).send(message);
   }
-
-  console.log(`Updating blog post \`${req.params.id}\``);
+  const updated = {};
+  const updateable = ['title', 'content'];
+  updateable.forEach(field => {
+    if (field in req.body) {
+      updated[field] = req.body[field];
+    }
+  });
   blogPost.update({
     id: req.params.id,
     title: req.body.title,
     content: req.body.content,
-    author: req.body.author
-  })
-  .then(posts => {
-    res.json(posts.map(post => post.serialize()));
   })
 });
-
 
 //DELETE /authors/:id
 app.delete('/authors/:id', (req, res) => {
@@ -162,6 +192,11 @@ app.delete('/posts/:id', (req, res) => {
     console.log(`Deleting blog post \`${req.params.id}\``);
     res.status(204).end();
   });
+});
+
+
+app.use('*', function (req, res) {
+  res.status(404).json({ message: 'Not Found' });
 });
 
 //server function for tests

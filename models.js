@@ -1,20 +1,38 @@
 import { Mongoose } from "mongoose";
+import { userInfo } from "os";
 
 const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 
+const blogPost = mongoose.model('blogPost', blogSchema);
+const author = mongoose.model('author', authorSchema);
+
 const blogSchema = Mongoose.Schema({
   title: String,
   content: String,
-  author: {
-    firstName: String, 
-    lastName: String
-  },
+  author: { type: mongoose.Schema.Types.ObjectId, ref: 'author' },
+  comments: [commentSchema],
   created: Date
 });
 
-const blogPost = mongoose.model('blogPost', blogSchema);
-const author = mongoose.model('author', authorSchema);
+blogSchema.pre('find', function(next) {
+  this.populate('author');
+  next();
+});
+
+blogSchema.pre('findOne', function(next) {
+  this.populate('author');
+next();
+});
+
+const authorSchema = Mongoose.Schema({
+  firstName: String,
+  lastName: String,
+  userName: {
+    type: String,
+    unique: true
+  }
+});
 
 blogSchema.virtual('authorName')
   .get(function() {
@@ -27,6 +45,7 @@ blogSchema.methods.serialize = function() {
     author: this.authorName,
     content: this.content,
     title: this.title,
+    comments: this.comments,
     created: this.created
   };
 };
