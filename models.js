@@ -1,21 +1,33 @@
 import { Mongoose } from "mongoose";
 
+const mongoose = require('mongoose');
+mongoose.Promise = global.Promise;
+
 const blogSchema = Mongoose.Schema({
   title: String,
   content: String,
-  author: [ {firstName: String}, {lastName: String} ],
+  author: {
+    firstName: String, 
+    lastName: String
+  },
   created: Date
 });
 
-const blogPost = mongoose.model('Blog', blogSchema);
+const blogPost = mongoose.model('blogPost', blogSchema);
 
 blogSchema.virtual('authorName')
   .get(function() {
-    const auth = this.author;
-    return `${auth.firstName} ${auth.lastName}`;
-  })
-  .set(function( authorName ) {
-    const [first, last] = authorName.split(' ');
-    this.author.firstName = first;
-    this.author.lastName = last;
+    return `${this.author.firstName} ${this.author.lastName}`.trim();
   });
+
+blogSchema.methods.serialize = function() {
+  return {
+    id: this._id,
+    author: this.authorName,
+    content: this.content,
+    title: this.title,
+    created: this.created
+  };
+};
+
+module.exports = {blogPost};
