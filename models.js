@@ -14,6 +14,7 @@ const blogSchema = Mongoose.Schema({
 });
 
 const blogPost = mongoose.model('blogPost', blogSchema);
+const author = mongoose.model('author', authorSchema);
 
 blogSchema.virtual('authorName')
   .get(function() {

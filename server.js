@@ -14,6 +14,19 @@ app.use(express.json());
 
 //GET /posts
 
+app.get('/authors', (req, res) => {
+  author.find()
+  .then(authors => {
+    res.json(authors.map(author = author.serialize()));
+  })
+  .catch(err => {
+    console.error(err);
+    res.status(500).json({error: 'error' });
+    });
+});
+
+//pre hook with the populate() method make all posts look like previoiusly did
+// {"title":  "some title", etc.}
 app.get('/posts', (req, res) => {
   blogPost.find()
   .then(posts => {
@@ -26,6 +39,7 @@ app.get('/posts', (req, res) => {
 });
 
 //GET /posts/:id
+//add an array of comments to single blog post
 
 app.get('/posts/:id', (req, res) => {
   blogPost.findById()
@@ -39,6 +53,28 @@ app.get('/posts/:id', (req, res) => {
 });
 
 //POST /posts
+
+app.post('/authors', (req, res) => {
+  const requiredFields = ['firstName', 'lastName', 'userName'];
+  for (let i =0; i < requiredFields[i]; i++) {
+    const field = requiredFields[i];
+    if (!(field in req.body)) {
+    const message = `Missing \`${field}\` in request body`
+      console.error(message);
+      return res.status(400).send(message);
+    }
+  }
+  author.create({
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    userName: req.bodyusertName,
+  })
+  .then(authors => {
+    res.json(authors.map(author => author.serialize()));
+  })
+})
+
+//request body should now contain json object
 
 app.post('/posts', (req, res) => {
   const requiredFields = ['title', 'content', 'author'];
@@ -58,14 +94,35 @@ app.post('/posts', (req, res) => {
   .then(posts => {
     res.json(posts.map(post => post.serialize()));
   })
-  .catch(err => {
-  console.error(err);
-  res.status(500).json({error: 'error' });
-  });
 });
 
 
 //PUT /posts/:id
+
+app.put('/authors/:id', (req, res) => {
+  if (req.params.id !== req.body.id) {
+    const message = `Request path id (${req.params.id}) and request body id (${req.body.id}) must match`;
+    console.error(message);
+    return res.status(400).send(message);
+  }
+  console.log(`Updating blog post \`${req.params.id}\``);
+  blogPost.update({
+    id: req.params.id,
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
+    userName: req.bodyusertName,
+  })
+  //needs to check if the names are already in use
+  // if (req.body.userName === ) {
+  //   const errorMessage = `Requested username (${req.body.userName}) is already taken by another author`;
+  //   console.error(errorMessage);
+  //   return res.status(400).send(errorMessage);
+  // }
+  .then(posts => {
+    res.json(posts.map(post => post.serialize()));
+  })
+});
+//only allow update title and content
 
 app.put('/posts/:id', (req, res) => {
   if (req.params.id !== req.body.id) {
@@ -84,6 +141,17 @@ app.put('/posts/:id', (req, res) => {
   .then(posts => {
     res.json(posts.map(post => post.serialize()));
   })
+});
+
+
+//DELETE /authors/:id
+app.delete('/authors/:id', (req, res) => {
+  authors.findByIdAndRemove(req.params.id)
+  //need to delete blog posts by author
+  .then(() => {
+    console.log(`Deleting author \`${req.params.id}\``);
+    res.status(204).end();
+  });
 });
 
 //DELETE /posts/:id
