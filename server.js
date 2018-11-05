@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 mongoose.Promise = global.Promise;
 mongoose.connect(DATABASE_URL);
 
-const {BlogPosts} = require('./models');
+const {blogPosts} = require('./models');
 
 const app = express();
 
